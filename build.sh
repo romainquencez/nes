@@ -1,15 +1,18 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
-CC65_HOME=/usr/local/share/cc65   # ajuste si besoin
+# Compile C source files
+cc65 -O -t nes src/main.c -o obj/main.s
+cc65 -O -t nes src/neslib.c -o obj/neslib.s
 
-mkdir -p build
+# Assemble all files
+ca65 src/header.s -o obj/header.o
+ca65 src/vectors.s -o obj/vectors.o
+ca65 obj/main.s -o obj/main.o
+ca65 obj/neslib.s -o obj/neslib.o
 
-# 1) C -> ASM
-cc65 -O -t nes src/main.c -o build/main.s
+# Link into .nes ROM
+ld65 -C nes.cfg obj/header.o obj/vectors.o obj/main.o obj/neslib.o \
+     -o bin/game.nes
 
-# 2) ASM -> OBJ
-ca65 -t nes build/main.s -o build/main.o
-
-# 3) LINK -> ROM .nes
-ld65 -C cfg/nes.cfg -o main.nes build/main.o
+echo "Build complete: bin/game.nes"
